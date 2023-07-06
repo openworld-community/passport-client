@@ -5,6 +5,7 @@ import jinja2
 import aiohttp_jinja2
 
 from client import index, login, logout, request_token
+from settings import PORT
 
 app = web.Application()
 aiohttp_jinja2.setup(
@@ -27,4 +28,4 @@ async def on_startup(app):
 app.on_startup.append(on_startup)
 
 if __name__ == '__main__':
-    web.run_app(app, port=8080)
+    web.run_app(app, port=PORT)
