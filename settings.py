@@ -5,7 +5,7 @@ KEYCLOAK_REDIRECT_URL = "http://0.0.0.0:8080/"
 KEYCLOAK_CLIENT = "fake-client"
 KEYCLOAK_URL = f"https://keycloak.regela.ru/realms/{KEYCLOAK_REALM}/protocol/openid-connect/"
 
-BACKEND_URL = "http://0.0.0.0:8888/"
+BACKEND_URL = "http://0.0.0.0:8888"
 
 
 # for locally rewrite settings add it to settings_local.py

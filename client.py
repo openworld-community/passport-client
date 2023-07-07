@@ -61,28 +61,10 @@ async def request_token(request):
     return response
 
 
-async def get_user(request):
-    '''
-    TODO: implement backend.
-    should take access token from request cookies and return user info from its DB like this:
-    >>> web.get("/user/{name}", get_user),
-    ...
-    >>> name = request.match_info['name']
-    >>> return web.json_response(get_user_from_db(name))
-    '''
-    name = request.match_info['name']
-    url = BACKEND_URL + 'user/' + name
-    async with ClientSession(cookies=request.cookies) as session:
-        async with session.get(url) as resp:
-            # TODO: change to json once endpoint is ready
-            data = await resp.text()
-    return web.Response(text=data)
-
-
 async def index(request):
     # if code is set in GET params, it was made by keycloak redirect after auth
     code = request.rel_url.query.get('code')
     response = aiohttp_jinja2.render_template(
-        "login.html", request, context={'keycloak_code': code})
+        "login.html", request, context={'keycloak_code': code, 'backend_url': BACKEND_URL})
 
     return response
