@@ -65,11 +65,13 @@ async def get_user(request):
     '''
     TODO: implement backend.
     should take access token from request cookies and return user info from its DB like this:
-    >>> token = request.cookies.get('access')
-    >>> data = parse_jwt(token)
-    >>> user_info = get_user_from_db(data['name'])
+    >>> web.get("/user/{name}", get_user),
+    ...
+    >>> name = request.match_info['name']
+    >>> return web.json_response(get_user_from_db(name))
     '''
-    url = BACKEND_URL + 'get_user'
+    name = request.match_info['name']
+    url = BACKEND_URL + 'user/' + name
     async with ClientSession(cookies=request.cookies) as session:
         async with session.get(url) as resp:
             # TODO: change to json once endpoint is ready

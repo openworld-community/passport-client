@@ -21,7 +21,7 @@
     <input type="submit" value="Log out" />
   </form>
 
-  <a id=user_info_link target=_blank href=/get_user>View user info - opens JSON in new tab</a>
+  <a id=user_info_link target=_blank href='/user/%username%'>View user info - opens JSON in new tab</a>
 {% endblock %}
 
 {% block script %}
@@ -53,6 +53,8 @@ if (access) {
     document.body.appendChild(p);
     console.debug(parsed_access)
     document.getElementById('login').remove()
+    let user_link = document.getElementById('user_info_link')
+    user_link.href = user_link.href.replace('%username%', parsed_access.preferred_username)
     // добавить refresh?
 }
 else {

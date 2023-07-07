@@ -16,7 +16,7 @@ app.add_routes([
     web.get("/", index),
     web.get("/login", login),
     web.get("/logout", logout),
-    web.get("/get_user", get_user),
+    web.get("/user/{name}", get_user),
     web.post("/request_token", request_token),
     web.static('/static', 'static'),
 ])
