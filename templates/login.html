@@ -1,36 +1,31 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+  {% if keycloak_code %}
+
+  <form id=request_token action="/request_token" method=post>
+    <input type="hidden" name=code value="{{ keycloak_code }}" />
+    <input type="submit" value="Request token - will set JWT to cookies" />
+  </form>
+
+  {% else %}
+
   <form id=login action="/login">
     <input type="submit" value="Log in" />
   </form>
+
+  {% endif %}
 
   <form id=logout action="/logout">
     <input type="submit" value="Log out" />
   </form>
 
-  <form id=request_token action="/request_token" method=post>
-    <input type="submit" value="Request token" />
-  </form>
+  <a id=user_info_link target=_blank href='{{backend_url}}/user/%username%'>View user info - opens JSON in new tab</a>
 {% endblock %}
 
 {% block script %}
 <script>
-function getHashParams() {
-
-    var hashParams = {};
-    var e,
-        a = /\+/g,  // Regex for replacing addition symbol with a space
-        r = /([^&;=]+)=?([^&;]*)/g,
-        d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
-        q = window.location.hash.substring(1);
-
-    while (e = r.exec(q))
-       hashParams[d(e[1])] = d(e[2]);
-
-    return hashParams;
-}
-
 function parseJwt (token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -49,24 +44,7 @@ function getCookie(name) {
 
 
 let access = getCookie('access');
-if (window.location.hash) {
-    let textNode = document.createTextNode('user logged in, keycloak returned ' + JSON.stringify(getHashParams()));
-    let p = document.createElement("p");
-    p.appendChild(textNode);
-    document.body.appendChild(p);
-
-    var form = document.getElementById('request_token');
-    form.addEventListener('submit', function(){
-        var hidden = document.createElement("input");
-        hidden.setAttribute('type', 'hidden');
-        hidden.setAttribute('name', 'code');
-        hidden.setAttribute('value', getHashParams().code);
-        this.appendChild(hidden);
-    });
-    document.getElementById('login').remove()
-}
-
-else if (access) {
+if (access) {
     let parsed_access = parseJwt(access);
     let username = parsed_access.name;
     let textNode = document.createTextNode('Hello ' + username + '! You can check debug info about your access token in dev console');
@@ -75,12 +53,12 @@ else if (access) {
     document.body.appendChild(p);
     console.debug(parsed_access)
     document.getElementById('login').remove()
-    document.getElementById('request_token').remove()
+    let user_link = document.getElementById('user_info_link')
+    user_link.href = user_link.href.replace('%username%', parsed_access.preferred_username)
     // добавить refresh?
 }
 else {
-    document.getElementById('request_token').remove()
-    document.getElementById('logout').remove()
+    document.getElementById('user_info_link').remove()
 }
 
 </script>
