@@ -1,4 +1,6 @@
 PORT = 8080
+HTTPS_PORT = 8443
+ENABLE_HTTPS = False
 SSL_KEY = None
 SSL_CERT = None
 
