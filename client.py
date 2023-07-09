@@ -65,7 +65,7 @@ async def get_user(request):
     access = request.cookies.get('access')
     headers = {'Authorization': 'Bearer ' + access}
     async with ClientSession(headers=headers) as session:
-        async with session.get(BACKEND_URL + '/get_user/all_data') as resp:
+        async with session.get(BACKEND_URL + '/user/all_data') as resp:
             data = await resp.json()
     return web.json_response(data)
 
