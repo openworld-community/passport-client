@@ -4,12 +4,11 @@ ENABLE_HTTPS = False
 SSL_KEY = None
 SSL_CERT = None
 
-KEYCLOAK_REALM = "peredelano"
+# where to redirect after login/logout - address of client app
 KEYCLOAK_REDIRECT_URL = "http://0.0.0.0:8080/"
 KEYCLOAK_CLIENT = "fake-client"
-KEYCLOAK_URL = f"https://keycloak.regela.ru/realms/{KEYCLOAK_REALM}/protocol/openid-connect/"
 
-BACKEND_URL = "http://0.0.0.0:8888"
+BACKEND_URL = "http://0.0.0.0:9999/api/v1"
 
 
 # for locally rewrite settings add it to settings_local.py

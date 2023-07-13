@@ -1,41 +1,49 @@
+import json
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 
 from aiohttp import web, ClientSession
 import aiohttp_jinja2
 
-from settings import KEYCLOAK_URL, KEYCLOAK_REDIRECT_URL, KEYCLOAK_CLIENT, BACKEND_URL
+from settings import KEYCLOAK_REDIRECT_URL, KEYCLOAK_CLIENT, BACKEND_URL
+
+
+async def request_backend(endpoint, data=None, method='POST', headers=None, wrap_to_response=True):
+    '''
+    wrapper to make queries to backend.
+    may return:
+        - web.HTTPFound if got redirect
+        - web.json_response if wrap_to_response is true
+        - dict otherwise
+    '''
+    url = BACKEND_URL + endpoint
+    async with ClientSession(headers=headers) as session:
+        meth = session.post if method == 'POST' else session.get
+        if data:
+            data = json.dumps(data)
+        async with meth(url, data=data, allow_redirects=False) as resp:
+            if loc := resp.headers.get('location'):
+                return web.HTTPFound(loc)
+            data = await resp.json()
+            if wrap_to_response:
+                return web.json_response(data, status=resp.status)
+            return data
 
 
 async def login(request):
     '''redirects to keycloak login url'''
-    url = KEYCLOAK_URL + "auth"
-    response_mode = 'query'  # 'fragment' sets code to URL fragment, 'form_post' does POST, 'query' does GET
-    url += f'?client_id={KEYCLOAK_CLIENT}&redirect_uri={KEYCLOAK_REDIRECT_URL}&response_mode={response_mode}&response_type=code&scope=openid'
-    return web.HTTPFound(url)
+    data = {'redirect_uri': KEYCLOAK_REDIRECT_URL, 'client_id': KEYCLOAK_CLIENT}
+    response = await request_backend('/login', data)
+    return response
 
 
 async def logout(request):
     '''redirects to keycloak logout url and removes jwt from cookies'''
-    url = KEYCLOAK_URL + "logout"
-    url += f'?client_id={KEYCLOAK_CLIENT}&post_logout_redirect_uri={KEYCLOAK_REDIRECT_URL}'
-    response = web.HTTPFound(url)
+    data = {'redirect_uri': KEYCLOAK_REDIRECT_URL, 'client_id': KEYCLOAK_CLIENT}
+    response = await request_backend('/logout', data)
     response.del_cookie('access')
     response.del_cookie('refresh')
     return response
-
-# refresh:
-# https://stackoverflow.com/questions/51386337/refresh-access-token-via-refresh-token-in-keycloak
-
-# TODO: move from client to backend?
-async def keycloak_request_token(code):
-    '''retrieves JWT from keycloak server by code'''
-    url = KEYCLOAK_URL + "token"
-    body = f"code={code}&grant_type=authorization_code&client_id={KEYCLOAK_CLIENT}&redirect_uri={KEYCLOAK_REDIRECT_URL}"
-    headers = {"Content-type": "application/x-www-form-urlencoded"}
-    async with ClientSession(headers=headers) as session:
-        async with session.post(url, data=bytes(body.encode())) as resp:
-            return await resp.json()
 
 
 async def request_token(request):
@@ -45,9 +53,10 @@ async def request_token(request):
     data = parse_qs(urlparse('?' + params).query)
     code = data['code'][0]
 
-    response = web.HTTPFound('/')
+    data = {'redirect_uri': KEYCLOAK_REDIRECT_URL, 'client_id': KEYCLOAK_CLIENT, 'code': code}
+    token = await request_backend('/token', data, wrap_to_response=False)
 
-    token = await keycloak_request_token(code)
+    response = web.HTTPFound('/')
     if not token or 'error' in token:
         response.del_cookie('access')
         print(code, token)
@@ -64,10 +73,7 @@ async def request_token(request):
 async def get_user(request):
     access = request.cookies.get('access')
     headers = {'Authorization': 'Bearer ' + access}
-    async with ClientSession(headers=headers) as session:
-        async with session.get(BACKEND_URL + '/user/all_data') as resp:
-            data = await resp.json()
-    return web.json_response(data)
+    return await request_backend('/user/all_data', method='GET', headers=headers)
 
 
 async def index(request):
